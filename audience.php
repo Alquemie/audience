@@ -428,7 +428,7 @@ class Alquemie_Audience_Segments {
 			$taxVal = ($secondaryaudience) ? get_term_by('id', $secondaryaudience, 'audience-segment') : '';
 			$secondaryaudience = (!empty($taxVal->name)) ? $taxVal->name : '';
 
-			$dataLayer = (!empty($buyerstage)) ? '"pageBuyerJourney":"' . $taxBuyerStage->name .'"' : '"pageBuyerJourney":"Awareness"';
+			$dataLayer = (!empty($buyerstage)) ? '"pageBuyerJourney":"' . $buyerstage .'"' : '"pageBuyerJourney":"Awareness"';
 			$dataLayer .= (!empty($division)) ? ',' . '"pageDivision":"' . $division .'"' : '';
 			$dataLayer .= (!empty($subject)) ? ',' . '"pageSubjectMatter":"' . $subject .'"' : '';
 			$dataLayer .= (!empty($primaryaudience)) ? ',' . '"pageAudience":"' . $primaryaudience .'"' : '';
