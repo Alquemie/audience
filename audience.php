@@ -83,6 +83,15 @@ class Alquemie_Audience_Segments {
 	protected $menu_title;
 
 	/**
+	 * The menu title of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $field_names    The string used for the menu title of this plugin.
+	 */
+	protected $field_names = array();
+
+	/**
 	 * The page title of the plugin options page.
 	 *
 	 * @since    1.0.0
@@ -90,6 +99,33 @@ class Alquemie_Audience_Segments {
 	 * @var      string    $option_page_title    The string used for the page title of this plugin.
 	 */
 	protected $option_page_title;
+
+	/**
+	 * The page title of the plugin options page.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $option_page_title    The string used for the page title of this plugin.
+	 */
+	protected $division_page_title;
+
+	/**
+	 * The page title of the plugin options page.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $option_page_title    The string used for the page title of this plugin.
+	 */
+	protected $subjectmatter_page_title;
+
+	/**
+	 * The page title of the plugin options page.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $option_page_title    The string used for the page title of this plugin.
+	 */
+	protected $audience_page_title;
 
 	public static function activate() {
 		if ( is_null( self::$instance ) ) {
@@ -111,7 +147,17 @@ class Alquemie_Audience_Segments {
 		$this->plugin_name = 'audience';
 		$this->menu_title = __('Audience Settings', ALQUEMIE_AUDIENCE_TEXT_DOMAIN );
 		$this->option_page_title = __('Audience Segment Options', ALQUEMIE_AUDIENCE_TEXT_DOMAIN );
+		$this->division_page_title = __('Division', ALQUEMIE_AUDIENCE_TEXT_DOMAIN );
+		$this->subjectmatter_page_title = __('Subject Matter', ALQUEMIE_AUDIENCE_TEXT_DOMAIN );
+		$this->audience_page_title = __('Segments', ALQUEMIE_AUDIENCE_TEXT_DOMAIN );
 		$this->options = get_option( 'alquemie_audience_options', array() );
+		$this->field_names = array (
+			'division' => __('Division', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ),
+			'subject' => __('Subject Matter', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ),
+			'journey' => __('Buying Stage', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ),
+			'audience1' => __('Primary Audience', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ),
+			'audience2' => __('Secondary Audience', ALQUEMIE_AUDIENCE_TEXT_DOMAIN )
+		);
 
 		// If it looks like first run, check compatibility
 		if( empty( $this->options ) ) {
@@ -123,7 +169,7 @@ class Alquemie_Audience_Segments {
 
 		// Activate taxonomies
 		$taxes = Alquemie_Audience_Taxonomies::activate();
-		$this->options['taxonomies'] = array('audience-topic','audience-focus','audience-journey','audience-segment');
+		$this->options['taxonomies'] = array('audience-division','audience-subject','audience-journey','audience-segment');
 
 		$this->init_filters();
 	}
@@ -188,12 +234,12 @@ class Alquemie_Audience_Segments {
 		foreach( array_keys( $types ) as $type ) {
 			if( $this->is_post_type_enabled( $type ) ) {	// the type doesn't support comments anyway
 				register_taxonomy_for_object_type( 'audience-journey', $type->name );
-				register_taxonomy_for_object_type( 'audience-focus', $type->name );
-				register_taxonomy_for_object_type( 'audience-topic', $type->name );
+				register_taxonomy_for_object_type( 'audience-subject', $type->name );
+				register_taxonomy_for_object_type( 'audience-division', $type->name );
 				register_taxonomy_for_object_type( 'audience-segment', $type->name );
 			} elseif (post_type_supports( $type, 'editor' )) {
-				unregister_taxonomy_for_object_type( 'audience-topic', $type->name );
-				unregister_taxonomy_for_object_type( 'audience-focus', $type->name );
+				unregister_taxonomy_for_object_type( 'audience-division', $type->name );
+				unregister_taxonomy_for_object_type( 'audience-subject', $type->name );
 				unregister_taxonomy_for_object_type( 'audience-journey', $type->name );
 				unregister_taxonomy_for_object_type( 'audience-segment', $type->name );
 			}
@@ -227,9 +273,9 @@ class Alquemie_Audience_Segments {
 	public function settings_menu() {
 
 		add_menu_page( $this->option_page_title, $this->menu_title, 'manage_options', 'alquemie_audience_settings', array( $this, 'settings_page' ), 'dashicons-groups', 100  );
-		add_submenu_page( 'alquemie_audience_settings', 'Topics', 'Topics', 'manage_options', 'edit-tags.php?taxonomy=audience-topic' );
-		add_submenu_page( 'alquemie_audience_settings', 'Focus', 'Focus', 'manage_options',  'edit-tags.php?taxonomy=audience-focus' );
-		add_submenu_page( 'alquemie_audience_settings', 'Segments', 'Segments', 'manage_options',  'edit-tags.php?taxonomy=audience-segment' );
+		add_submenu_page( 'alquemie_audience_settings', $this->division_page_title, $this->division_page_title, 'manage_options', 'edit-tags.php?taxonomy=audience-division' );
+		add_submenu_page( 'alquemie_audience_settings', $this->subjectmatter_page_title, $this->subjectmatter_page_title, 'manage_options',  'edit-tags.php?taxonomy=audience-subject' );
+		add_submenu_page( 'alquemie_audience_settings', $this->audience_page_title,  $this->audience_page_title, 'manage_options',  'edit-tags.php?taxonomy=audience-segment' );
 		// add_submenu_page( 'options-general.php', $title, $title, 'manage_options', 'alquemie_audience_settings', array( $this, 'settings_page' ) );
 	}
 
@@ -267,88 +313,49 @@ class Alquemie_Audience_Segments {
 		}
 	}
 
+	private function get_default_value ( $option ) {
+		if (! empty($this->options['default_audience'][$option])) {
+			return $this->options['default_audience'][$option];
+		} else {
+			return '';
+		}
+	}
 	public function render_audience_mb( $post ) {
 
 		// Add nonce for security and authentication.
 		wp_nonce_field( 'alqnonce_action', 'alqnonce' );
 
 		// Retrieve an existing value from the database.
-		$topic = get_post_meta( $post->ID, 'alquemie_topic', true );
-		$focus = get_post_meta( $post->ID, 'alquemie_focus', true );
-		$buyerstage = get_post_meta( $post->ID, 'alquemie_buyerstage', true );
-		$primaryaudience = get_post_meta( $post->ID, 'alquemie_audience1', true );
-		$secondaryaudience = get_post_meta( $post->ID, 'alquemie_audience2', true );
+		$division = get_post_meta( $post->ID, 'alq_audience_division', true );
+		$subject = get_post_meta( $post->ID, 'alq_audience_subject', true );
+		$buyerstage = get_post_meta( $post->ID, 'alq_audience_buyerstage', true );
+		$primaryaudience = get_post_meta( $post->ID, 'alq_audience_audience1', true );
+		$secondaryaudience = get_post_meta( $post->ID, 'alq_audience_audience2', true );
 
 		// Set default values.
-		if( empty( $topic ) ) $topic = '';
-		if( empty( $focus ) ) $focus = '';
-		if( empty( $buyerstage ) ) $buyerstage = '';
-		if( empty( $primaryaudience ) ) $primaryaudience = '';
+		if( empty( $division ) ) $division = $this->get_default_value('division');
+		if( empty( $subject ) ) $subject = $this->get_default_value('subject');
+		if( empty( $buyerstage ) ) $buyerstage = $this->get_default_value('journey');
+		if( empty( $primaryaudience ) ) $primaryaudience = $this->get_default_value('segment');
 		if( empty( $secondaryaudience ) ) $secondaryaudience = '';
 
-		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_topic">Topic</label></p>';
-		wp_dropdown_categories( array( 'id' => 'alq_topic', 'name' => 'alq_topic', 'class' => 'alq_audience_field', 'selected' => $topic, 'taxonomy' => 'audience-topic', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Topic - ' ) );
+		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_division">' .  $this->field_names['division'] . '</label></p>';
+		wp_dropdown_categories( array( 'id' => 'alq_division', 'name' => 'alq_division', 'class' => 'alq_audience_field', 'selected' => $division, 'taxonomy' => 'audience-division', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - DEFAULT - ' ) );
 
-		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_focus">Focus</label></p>';
-		wp_dropdown_categories( array( 'id' => 'alq_focus', 'name' => 'alq_focus', 'class' => 'alq_audience_field', 'selected' => $focus, 'taxonomy' => 'audience-focus', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Focus - ' ) );
+		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_subject">' .  $this->field_names['subject'] . '</label></p>';
+		wp_dropdown_categories( array( 'id' => 'alq_subject', 'name' => 'alq_subject', 'class' => 'alq_audience_field', 'selected' => $subject, 'taxonomy' => 'audience-subject', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - DEFAULT - ' ) );
 
-		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_buyerstage">Buyer Stage</label></p>';
-		wp_dropdown_categories( array( 'id' => 'alq_buyerstage', 'name' => 'alq_buyerstage', 'class' => 'alq_audience_field', 'selected' => $buyerstage, 'taxonomy' => 'audience-journey', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Stage - ' ) );
+		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_buyerstage">' .  $this->field_names['journey'] . '</label></p>';
+		wp_dropdown_categories( array( 'id' => 'alq_buyerstage', 'name' => 'alq_buyerstage', 'class' => 'alq_audience_field', 'selected' => $buyerstage, 'taxonomy' => 'audience-journey', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - DEFAULT - ' ) );
 
-		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_primaryaudience">Primary Audience</label></p>';
-		wp_dropdown_categories( array( 'id' => 'alq_primaryaudience', 'name' => 'alq_primaryaudience', 'class' => 'alq_audience_field', 'selected' => $primaryaudience,  'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Audience - ') );
+		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_primaryaudience">' .  $this->field_names['audience1'] . '</label></p>';
+		wp_dropdown_categories( array( 'id' => 'alq_primaryaudience', 'name' => 'alq_primaryaudience', 'class' => 'alq_audience_field', 'selected' => $primaryaudience,  'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - DEFAULT - ') );
 
 		// echo '<div class="inside">';
-		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_secondaryaudience">Secondary Audience</label></p>';
-		wp_dropdown_categories( array( 'id' => 'alq_secondaryaudience', 'name' => 'alq_secondaryaudience', 'class' => 'alq_audience_field', 'selected' => $secondaryaudience, 'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Secondary - ' ) );
+		echo '  <p class="post-attributes-label-wrapper"><label class="post-audience-label" for="alq_secondaryaudience">' .  $this->field_names['audience2'] . '</label></p>';
+		wp_dropdown_categories( array( 'id' => 'alq_secondaryaudience', 'name' => 'alq_secondaryaudience', 'class' => 'alq_audience_field', 'selected' => $secondaryaudience, 'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - NONE - ' ) );
 		// echo '</div>';
 
-
-		// Form fields.
-		/*
-		echo '<table class="form-table-small">';
-
-		echo '	<tr>';
-		echo '		<th><label for="alq_topic" class="post-attributes-label">' . __( 'Topic', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ) . '</label></th>';
-		echo '  </tr><tr><td>';
-		wp_dropdown_categories( array( 'id' => 'alq_topic', 'name' => 'alq_topic', 'class' => 'alq_audience_field', 'selected' => $topic, 'taxonomy' => 'audience-topic', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Topic - ' ) );
-		//wp_dropdown_categories('taxonomy=category&hide-empty=0');
-		echo '		</td>';
-		echo '	</tr>';
-
-		echo '	<tr>';
-		echo '		<th><label for="alq_focus" class="post-attributes-label">' . __( 'Focus', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ) . '</label></th>';
-		echo '  </tr><tr><td>';
-		wp_dropdown_categories( array( 'id' => 'alq_focus', 'name' => 'alq_focus', 'class' => 'alq_audience_field', 'selected' => $focus, 'taxonomy' => 'audience-focus', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Focus - ' ) );
-		//wp_dropdown_categories('taxonomy=category&hide-empty=0');
-		echo '		</td>';
-		echo '	</tr>';
-
-    echo '	<tr>';
-		echo '		<th><label for="alq_buyerstage" class="post-attributes-label">' . __( 'Stage of Buyers Journey', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ) . '</label></th>';
-		echo '  </tr><tr><td>';
-		wp_dropdown_categories( array( 'id' => 'alq_buyerstage', 'name' => 'alq_buyerstage', 'class' => 'alq_audience_field', 'selected' => $buyerstage, 'taxonomy' => 'audience-journey', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Stage - ' ) );
-		//wp_dropdown_categories('taxonomy=category&hide-empty=0');
-		echo '		</td>';
-		echo '	</tr>';
-
-		echo '	<tr>';
-		echo '		<th><label for="alq_primaryaudience" class="post-attributes-label">' . __( 'Audience Segment', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ) . '</label></th>';
-		echo '  </tr><tr><td>';
-		wp_dropdown_categories( array( 'id' => 'alq_primaryaudience', 'name' => 'alq_primaryaudience', 'class' => 'alq_audience_field', 'selected' => $primaryaudience,  'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Audience - ') );
-		echo '		</td>';
-		echo '	</tr>';
-
-		echo '	<tr>';
-		echo '		<th><label for="alq_secondaryaudience" class="post-attributes-label">' . __( 'Secondary Audience', ALQUEMIE_AUDIENCE_TEXT_DOMAIN ) . '</label></th>';
-		echo '  </tr><tr><td>';
-		wp_dropdown_categories( array( 'id' => 'alq_secondaryaudience', 'name' => 'alq_secondaryaudience', 'class' => 'alq_audience_field', 'selected' => $secondaryaudience, 'taxonomy' => 'audience-segment', 'hide_empty' => false, 'option_none_value' => '', 'show_option_none' => ' - Select Secondary - ' ) );
-		echo '		</td>';
-		echo '	</tr>';
-
-		echo '</table>'; */
-		echo '<h4>Options</h4>';
-		print_r($this->options);
 	}
 
 	public function save_metabox( $post_id, $post ) {
@@ -370,8 +377,8 @@ class Alquemie_Audience_Segments {
 			return;
 
 		// Sanitize user input.
-		$alqnew_topic = isset( $_POST[ 'alq_topic' ] ) ? sanitize_text_field( $_POST[ 'alq_topic' ] ) : '';
-		$alqnew_focus = isset( $_POST[ 'alq_focus' ] ) ? sanitize_text_field( $_POST[ 'alq_focus' ] ) : '';
+		$alqnew_div = isset( $_POST[ 'alq_division' ] ) ? sanitize_text_field( $_POST[ 'alq_division' ] ) : '';
+		$alqnew_subject = isset( $_POST[ 'alq_subject' ] ) ? sanitize_text_field( $_POST[ 'alq_subject' ] ) : '';
 		$alqnew_buyerstage = isset( $_POST[ 'alq_buyerstage' ] ) ? sanitize_text_field( $_POST[ 'alq_buyerstage' ] ) : '';
 		$alqnew_primaryaudience= isset( $_POST[ 'alq_primaryaudience' ] ) ? sanitize_text_field( $_POST[ 'alq_primaryaudience' ] ) : '';
 		$alqnew_secondaryaudience = isset( $_POST[ 'alq_secondaryaudience' ] ) ? sanitize_text_field( $_POST[ 'alq_secondaryaudience' ] ) : '';
@@ -380,20 +387,20 @@ class Alquemie_Audience_Segments {
     $audIDs = array_unique( $audIDs );
 
 		// Update the meta field in the database.
-		wp_set_object_terms( $post_id, null, 'alqContentTopic' );
-		wp_set_object_terms( $post_id, null, 'alqContentFocus' );
-		wp_set_object_terms( $post_id, null, 'alq_buyerjourney' );
-    wp_set_object_terms( $post_id, null, 'alq_audiencesegment' );
-		wp_set_object_terms( $post_id, intval($alqnew_topic), 'alqContentTopic' );
-		wp_set_object_terms( $post_id, intval($alqnew_focus), 'alqContentFocus' );
-    wp_set_object_terms( $post_id, intval($alqnew_buyerstage), 'alq_buyerjourney' );
-    wp_set_object_terms( $post_id, $audIDs, 'alq_audiencesegment' );
+		wp_set_object_terms( $post_id, null, 'audience-division' );
+		wp_set_object_terms( $post_id, null, 'audience-subject' );
+		wp_set_object_terms( $post_id, null, 'audience-journey' );
+    wp_set_object_terms( $post_id, null, 'audience-segment' );
+		wp_set_object_terms( $post_id, intval($alqnew_div), 'audience-division' );
+		wp_set_object_terms( $post_id, intval($alqnew_subject), 'audience-subject' );
+    wp_set_object_terms( $post_id, intval($alqnew_buyerstage), 'audience-journey' );
+    wp_set_object_terms( $post_id, $audIDs, 'audience-segment' );
 
-		update_post_meta( $post_id, 'alquemie_topic', $alqnew_topic );
-		update_post_meta( $post_id, 'alquemie_focus', $alqnew_focus );
-		update_post_meta( $post_id, 'alquemie_buyerstage', $alqnew_buyerstage );
-		update_post_meta( $post_id, 'alquemie_primary_audience', $alqnew_primaryaudience );
-		update_post_meta( $post_id, 'alquemie_secondary_audience', $alqnew_secondaryaudience );
+		update_post_meta( $post_id, 'alq_audience_division', $alqnew_div );
+		update_post_meta( $post_id, 'alq_audience_subject', $alqnew_subject );
+		update_post_meta( $post_id, 'alq_audience_buyerstage', $alqnew_buyerstage );
+		update_post_meta( $post_id, 'alq_audience_audience1', $alqnew_primaryaudience );
+		update_post_meta( $post_id, 'alq_audience_audience2', $alqnew_secondaryaudience );
 
 	}
 
@@ -401,25 +408,31 @@ class Alquemie_Audience_Segments {
     global $wp_query;
     $postid = $wp_query->post->ID;
     if ($postid) {
-			$topic = get_post_meta( $postid, 'alquemie_topic', true );
-			$focus = get_post_meta( $postid, 'alquemie_focus', true );
-      $buyerstage = get_post_meta( $postid, 'alquemie_buyerstage', true );
-  		$primaryaudience = get_post_meta( $postid, 'alquemie_primary_audience', true );
-  		$secondaryaudience = get_post_meta( $postid, 'alquemie_secondary_audience', true );
-			$taxTopic = ($topic) ? get_term_by('id', $topic, 'alqContentTopic') : '';
-			$taxFocus = ($focus) ? get_term_by('id', $focus, 'alqContentFocus') : '';
-      $taxBuyerStage = ($buyerstage) ? get_term_by('id', $buyerstage, 'alq_buyerjourney') : '';
-      $taxAudience = ($primaryaudience) ? get_term_by('id', $primaryaudience, 'alq_audiencesegment') : '';
-      $taxSecondAudience = ($secondaryaudience) ? get_term_by('id', $secondaryaudience, 'alq_audiencesegment') :'';
-      $dataLayer = (isset($taxBuyerStage->name)) ? '"pageBuyerJourney":"' . $taxBuyerStage->name .'"' : '"pageBuyerJourney":"Awareness"';  // Update with config value for default
-      $dataLayer .= ( (strlen($dataLayer)>0) && ($taxAudience)) ? ',' : '';
-      $dataLayer .= ($taxAudience->name != '') ? '"pageAudience":"' . $taxAudience->name .'"' : '';
-      $dataLayer .= ( (strlen($dataLayer)>0) && ($taxSecondAudience)) ? ',' : '';
-      $dataLayer .= ($taxSecondAudience->name != '') ? '"pageSecondAudience":"' . $taxSecondAudience->name .'"' : '';
-			$dataLayer .= ( (strlen($dataLayer)>0) && ($taxTopic)) ? ',' : '';
-      $dataLayer .= ($taxTopic->name != '') ? '"pageTopic":"' . $taxTopic->name .'"' : '';
-			$dataLayer .= ( (strlen($dataLayer)>0) && ($taxFocus)) ? ',' : '';
-      $dataLayer .= ($taxFocus->name != '') ? '"pageFocus":"' . $taxFocus->name .'"' : '';
+			$division = get_post_meta( $postid, 'alq_audience_division', true );
+			$taxVal = ($division) ? get_term_by('id', $division, 'audience-division') : '';
+			$division = (!empty($taxVal->name)) ? $taxVal->name : $this->get_default_value('division');
+
+			$subject = get_post_meta( $postid, 'alq_audience_subject', true );
+			$taxVal = ($subject) ? get_term_by('id', $subject, 'audience-subject') : '';
+			$subject = (!empty($taxVal->name)) ? $taxVal->name : $this->get_default_value('subject');
+
+      $buyerstage = get_post_meta( $postid, 'alq_audience_buyerstage', true );
+			$taxVal = ($buyerstage) ? get_term_by('id', $buyerstage, 'audience-journey') : '';
+			$buyerstage = (!empty($taxVal->name)) ? $taxVal->name : $this->get_default_value('journey');
+
+  		$primaryaudience = get_post_meta( $postid, 'alq_audience_audience1', true );
+			$taxVal = ($primaryaudience) ? get_term_by('id', $primaryaudience, 'audience-segment') : '';
+			$primaryaudience = (!empty($taxVal->name)) ? $taxVal->name : $this->get_default_value('segment');
+
+  		$secondaryaudience = get_post_meta( $postid, 'alq_audience_audience2', true );
+			$taxVal = ($secondaryaudience) ? get_term_by('id', $secondaryaudience, 'audience-segment') : '';
+			$secondaryaudience = (!empty($taxVal->name)) ? $taxVal->name : '';
+
+			$dataLayer = (!empty($buyerstage)) ? '"pageBuyerJourney":"' . $taxBuyerStage->name .'"' : '"pageBuyerJourney":"Awareness"';
+			$dataLayer .= (!empty($division)) ? ',' . '"pageDivision":"' . $division .'"' : '';
+			$dataLayer .= (!empty($subject)) ? ',' . '"pageSubjectMatter":"' . $subject .'"' : '';
+			$dataLayer .= (!empty($primaryaudience)) ? ',' . '"pageAudience":"' . $primaryaudience .'"' : '';
+      $dataLayer .= (!empty($secondaryaudience)) ? ',' . '"pageSecondAudience":"' . $secondaryaudience .'"' : '';
 
       $script = '<script>';
       $script .= "if (typeof dataLayer !== 'undefined') { dataLayer.push({" . $dataLayer ."}); }" . PHP_EOL;
