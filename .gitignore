@@ -64,21 +64,10 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-### WordPress ###
-**/*.log
-**/.htaccess
-**/sitemap.xml
-**/sitemap.xml.gz
-**/wp-config.php
-/webroot/
-**/*.local
-/backups/
-
 ### Composer ###
-**/vendor/
+**/lib/
 **/composer.lock
 **/composer-extra-assets.lock
-**/composer.json
 package.json
 
 #BOWER
