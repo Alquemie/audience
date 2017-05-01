@@ -1,0 +1,16 @@
+{
+    "name": "alquemie/audience",
+    "description": "Creates custom taxonomies for selected builtin and custom post types to identify the target audience and buying stage the content targets.",
+    "authors": [
+        {
+            "name": "Chris Carrel",
+            "email": "plugins@alquemie.net"
+        }
+    ],
+    "homepage": "https://www.alquemie.net/plugins/audience",
+    "license": "GPL-3.0",
+    "type": "wordpress-plugin",
+    "config": {
+        "vendor-dir": "lib"
+    }
+}
