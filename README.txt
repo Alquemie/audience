@@ -1,14 +1,14 @@
 === Audience Segments ===
 Contributors: Alquemie
 Donate link: https://www.alquemie.net
-Tags: marketing, audience, buyer journey
+Tags: marketing, audience, buyer journey, google analytics, reporting
 Requires at least: 4.0
 Tested up to: 4.7.4
 Stable tag: 1.1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Create custom taxonomies based on target audience segments and the buyers journey.
+Custom taxonomies based on target audience segments and phases of the buyers journey.
 
 == Description ==
 

@@ -1,6 +1,6 @@
-# Audience Segments
+# Audience Segment Taxonomies
 
-Create custom taxonomies based on target audience segments and the buyers journey.
+Custom taxonomies based on target audience segments and phases of the buyers journey.
 
 ## Description
 

@@ -7,7 +7,7 @@
  * @package           AlquemieAudience
  *
  * @wordpress-plugin
- * Plugin Name:       Audience Taxonomies
+ * Plugin Name:       Audience Segment Taxonomies
  * Plugin URI:        https://www.alquemie.net/plugins/audience/
  * Description:       Adds the ability to tag and track content based on Audience Segments and Buyer Journey
  * Version:           1.1.0
